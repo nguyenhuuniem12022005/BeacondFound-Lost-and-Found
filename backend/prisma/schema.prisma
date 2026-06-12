@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GUEST
+  MEMBER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  LOCKED
+}
+
+enum PostType {
+  LOST
+  FOUND
+}
+
+enum PostStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  RESOLVED
+  DELETED
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  fullName     String
+  email        String     @unique
+  phone        String?
+  passwordHash String
+  avatarUrl    String?
+  role         Role       @default(MEMBER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  posts            Post[]
+  notifications    Notification[]
+  messages         Message[]
+  conversationsOne Conversation[] @relation("MemberOne")
+  conversationsTwo Conversation[] @relation("MemberTwo")
+  reportsMade      Report[]       @relation("Reporter")
+  reportsReceived  Report[]       @relation("ReportedUser")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts Post[]
+}
+
+model Post {
+  id          Int        @id @default(autoincrement())
+  title       String
+  type        PostType
+  description String
+  eventDate   DateTime
+  address     String
+  latitude    Float
+  longitude   Float
+  status      PostStatus @default(PENDING)
+  userId      Int
+  categoryId  Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images        PostImage[]
+  postTags      PostTag[]
+  conversations Conversation[]
+  reports       Report[]
+}
+
+model PostImage {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  imageUrl  String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  postTags PostTag[]
+}
+
+model PostTag {
+  postId Int
+  tagId  Int
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Conversation {
+  id          Int      @id @default(autoincrement())
+  postId      Int?
+  memberOneId Int
+  memberTwoId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
+  memberOne User      @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+  memberTwo User      @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+  messages  Message[]
+}
+
+model Message {
+  id             Int      @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  content   String
+  targetUrl String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id             Int          @id @default(autoincrement())
+  reporterId     Int
+  reportedUserId Int?
+  postId         Int?
+  reason         String
+  status         ReportStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  reporter     User  @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser User? @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  post         Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+}
