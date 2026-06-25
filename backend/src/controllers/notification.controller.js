@@ -1,4 +1,30 @@
 const prisma = require('../config/prisma');
+const fcmService = require('../services/fcm.service');
+const { getIO } = require('../socket');
+
+// pushNotification(n): boolean - đẩy thông báo tức thời (Socket.io + FCM)
+function pushNotification(notification) {
+  const { userId, content } = notification;
+  try {
+    const io = getIO();
+    if (io) {
+      io.to(`user:${userId}`).emit('notification:new', notification);
+    }
+  } catch (e) {
+    // socket chưa khởi tạo (vd: chạy seed) -> bỏ qua
+  }
+  fcmService.sendPush(userId, 'BeacondFound', content).catch(() => {});
+  return true;
+}
+
+// createNotification(n): boolean - tạo bản ghi thông báo rồi đẩy realtime
+async function createNotification({ userId, type, content, targetUrl }) {
+  const notification = await prisma.notification.create({
+    data: { userId, type, content, targetUrl },
+  });
+  pushNotification(notification);
+  return notification;
+}
 
 // GET /api/notifications
 async function getNotifications(req, res, next) {
@@ -48,4 +74,10 @@ async function markAllAsRead(req, res, next) {
   }
 }
 
-module.exports = { getNotifications, markAsRead, markAllAsRead };
+module.exports = {
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  createNotification,
+  pushNotification,
+};

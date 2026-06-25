@@ -35,14 +35,15 @@ function groupLabel(dateStr) {
   return 'TRƯỚC ĐÓ';
 }
 
-export default function NotificationsPage() {
+export default function NotificationPage() {
   const navigate = useNavigate();
   const { setUnreadNotifications } = useSocket();
   const [notifications, setNotifications] = useState([]);
+  const [selectedNotification, setSelectedNotification] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('');
 
-  const load = () => {
+  const loadNotifications = () => {
     api
       .get('/notifications')
       .then((res) => {
@@ -53,9 +54,14 @@ export default function NotificationsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(loadNotifications, []);
 
-  const open = async (n) => {
+  const navigateToTarget = (n) => {
+    if (n.targetUrl) navigate(n.targetUrl);
+  };
+
+  const handleSelectNotification = async (n) => {
+    setSelectedNotification(n);
     if (!n.isRead) {
       try {
         await api.put(`/notifications/${n.id}/read`);
@@ -65,10 +71,10 @@ export default function NotificationsPage() {
         // bỏ qua
       }
     }
-    if (n.targetUrl) navigate(n.targetUrl);
+    navigateToTarget(n);
   };
 
-  const markAll = async () => {
+  const markAllAsRead = async () => {
     await api.put('/notifications/read-all');
     setNotifications((prev) => prev.map((x) => ({ ...x, isRead: true })));
     setUnreadNotifications(0);
@@ -99,7 +105,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold text-gray-900">Thông báo</h1>
         {unreadCount > 0 && (
-          <button onClick={markAll} className="flex items-center gap-1 text-xs font-semibold text-primary-700 hover:underline">
+          <button onClick={markAllAsRead} className="flex items-center gap-1 text-xs font-semibold text-primary-700 hover:underline">
             {Icon.check('h-3.5 w-3.5')} Đánh dấu tất cả đã đọc
           </button>
         )}
@@ -141,10 +147,10 @@ export default function NotificationsPage() {
                   return (
                     <button
                       key={n.id}
-                      onClick={() => open(n)}
+                      onClick={() => handleSelectNotification(n)}
                       className={`flex w-full items-start gap-3 rounded-xl p-3 text-left transition hover:bg-primary-50 ${
                         !n.isRead ? 'bg-primary-50/70' : 'bg-white'
-                      }`}
+                      } ${selectedNotification?.id === n.id ? 'ring-1 ring-primary-300' : ''}`}
                     >
                       <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${ic.color}`}>
                         {ic.node}

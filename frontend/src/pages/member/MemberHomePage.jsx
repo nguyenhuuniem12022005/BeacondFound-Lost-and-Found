@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/axios';
 import PostCard from '../../components/PostCard';
 import Icon from '../../components/Icons';
 import { LoadingScreen, EmptyState } from '../../components/common';
+import { useSocket } from '../../context/SocketContext';
 
 const TYPE_TABS = [
   { value: '', label: 'Tất cả' },
@@ -18,9 +19,12 @@ const TIME_OPTIONS = [
   { value: '30', label: '30 ngày qua' },
 ];
 
-export default function HomePage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+export default function MemberHomePage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') || '';
+  const { unreadNotifications, setUnreadNotifications } = useSocket();
+  const unreadBadge = unreadNotifications;
 
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -49,24 +53,53 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, [keyword, type, categoryId, days, tag]);
 
+  const handleCreatePostClick = () => navigate('/create-post');
+
+  const handleOpenNotification = () => navigate('/notifications');
+
+  const updateUnreadBadge = (count) => setUnreadNotifications(count);
+
+  // Đồng bộ số thông báo chưa đọc cho chuông trên trang chủ
+  useEffect(() => {
+    api
+      .get('/notifications')
+      .then((res) => updateUnreadBadge(res.data.unreadCount))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 pb-24">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold text-gray-900">
           {keyword ? `Kết quả cho "${keyword}"` : 'Bài đăng mới nhất'}
         </h1>
-        <div className="flex rounded-lg border border-primary-200 bg-white p-0.5">
-          {TYPE_TABS.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setType(t.value)}
-              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-                type === t.value ? 'bg-primary-700 text-white' : 'text-gray-600 hover:text-primary-700'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-lg border border-primary-200 bg-white p-0.5">
+            {TYPE_TABS.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setType(t.value)}
+                className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                  type === t.value ? 'bg-primary-700 text-white' : 'text-gray-600 hover:text-primary-700'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleOpenNotification}
+            className="relative rounded-full border border-primary-200 bg-white p-2 text-gray-500 transition hover:bg-primary-50 hover:text-primary-700"
+            title="Thông báo"
+          >
+            {Icon.bell('h-5 w-5')}
+            {unreadBadge > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white">
+                {unreadBadge > 9 ? '9+' : unreadBadge}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -141,9 +174,9 @@ export default function HomePage() {
           title="Không tìm thấy bài đăng nào"
           description="Thử thay đổi từ khóa hoặc bộ lọc, hoặc trở thành người đầu tiên đăng tin tại khu vực của bạn."
           action={
-            <Link to="/create-post" className="btn-primary">
+            <button onClick={handleCreatePostClick} className="btn-primary">
               {Icon.plus('h-4 w-4')} Đăng bài ngay
-            </Link>
+            </button>
           }
         />
       ) : (
@@ -153,6 +186,14 @@ export default function HomePage() {
           ))}
         </div>
       )}
+
+      {/* Nút đăng bài nổi */}
+      <button
+        onClick={handleCreatePostClick}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary-700 px-5 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-primary-800"
+      >
+        {Icon.plus('h-5 w-5')} Đăng bài
+      </button>
     </div>
   );
 }

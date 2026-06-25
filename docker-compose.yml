@@ -1,0 +1,27 @@
+# PostgreSQL cho BeacondFound
+# Chạy: docker compose up -d
+# Dừng: docker compose down
+# Xóa cả dữ liệu: docker compose down -v
+
+services:
+  db:
+    image: postgres:16
+    container_name: beacondfound-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: beacondfound
+    ports:
+      # Host 5544 -> container 5432 (5432 trên máy đã bị PostgreSQL cài sẵn chiếm)
+      - "5544:5432"
+    volumes:
+      - beacondfound_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d beacondfound"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  beacondfound_pg_data:

@@ -1,0 +1,174 @@
+@startuml class_quanlybaidang
+' ============================================================
+'  Bieu do lop - Chuc nang QUAN LY BAI DANG (admin kiem duyet)
+'  Bo cuc 3 hang thang:  TREN  = Page
+'                        GIUA  = Controller
+'                        DUOI  = Entity
+'  Quy uoc quan he:
+'   - Page   <-> Page       : association
+'   - Page   <-> Controller : association
+'   - Entity <-> Controller : association
+'   - Page   chua Entity    : composition
+'   - Entity <-> Entity     : theo so do lop thuc the chuan
+'  (PostDetailPage o day la man hinh admin duyet bai = AdminPostDetail trong code;
+'   Notification.targetUrl la chuoi dieu huong -> khong lien ket truc tiep toi Post)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 110
+hide circle
+top to bottom direction
+
+' ==================== TANG TREN: PAGE ====================
+class AdminHomePage {
+  - admin : User
+  - btnManagePost : Button
+  + handleManagePostClick() : void
+}
+
+class ManagePostPage {
+  - admin : User
+  - pendingPosts : Post[]
+  - selectedPost : Post
+  + loadPendingPosts() : void
+  + handleViewPost(p : Post) : void
+}
+
+class PostDetailPage {
+  - admin : User
+  - post : Post
+  - images : PostImage[]
+  - tagList : Tag[]
+  - mapComponent : Map
+  - btnApprove : Button
+  - btnReject : Button
+  + handleApprove() : void
+  + handleReject() : void
+}
+
+' ==================== TANG GIUA: CONTROLLER ====================
+class PostController {
+  + getPendingPosts() : Post[]
+  + approvePost(p : Post) : boolean
+  + rejectPost(p : Post) : boolean
+}
+class ImageController {
+  + getImagesByPost(p : Post) : PostImage[]
+}
+class NotificationController {
+  + createNotification(n : Notification) : boolean
+}
+
+' ==================== TANG DUOI: ENTITY ====================
+class Notification {
+  - id : int
+  - userId : int
+  - type : String
+  - content : String
+  - targetUrl : String
+  - isRead : Boolean
+  - createdAt : DateTime
+}
+
+class User {
+  - id : int
+  - fullName : String
+  - email : String
+  - phone : String
+  - passwordHash : String
+  - avatarUrl : String
+  - role : Enum
+  - status : Enum
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - posts : Post[]
+  - notifications : Notification[]
+}
+
+class Post {
+  - id : int
+  - title : String
+  - type : Enum
+  - description : String
+  - eventDate : DateTime
+  - address : String
+  - latitude : Float
+  - longitude : Float
+  - status : Enum
+  - userId : int
+  - categoryId : int
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - images : PostImage[]
+  - postTags : PostTag[]
+}
+
+class PostImage {
+  - id : int
+  - postId : int
+  - imageUrl : String
+  - createdAt : DateTime
+}
+
+class PostTag {
+  - postId : int
+  - tagId : int
+}
+
+class Tag {
+  - id : int
+  - name : String
+}
+
+' ========================= QUAN HE =========================
+
+' --- TANG TREN thang hang: Page <-> Page (association) ---
+AdminHomePage -right- ManagePostPage
+ManagePostPage -right- PostDetailPage
+
+' --- TANG GIUA thang hang: Controller ---
+PostController -[hidden]right- ImageController
+ImageController -[hidden]right- NotificationController
+
+' --- TANG DUOI thang hang: Entity ---
+Notification -[hidden]right- User
+User -[hidden]right- Post
+Post -[hidden]right- PostImage
+PostImage -[hidden]right- PostTag
+PostTag -[hidden]right- Tag
+
+' --- Page <-> Controller : association (doc) ---
+ManagePostPage -- PostController
+PostDetailPage -- PostController
+PostDetailPage -- ImageController
+PostDetailPage -- NotificationController
+
+' --- Entity <-> Controller : association (doc) ---
+PostController -- Post
+ImageController -- PostImage
+NotificationController -- Notification
+
+' --- Page chua Entity : composition (doc) ---
+AdminHomePage *-- User
+ManagePostPage *-- User
+ManagePostPage *-- Post
+PostDetailPage *-- User
+PostDetailPage *-- Post
+PostDetailPage *-- PostImage
+PostDetailPage *-- Tag
+
+' --- Entity <-> Entity : theo so do lop thuc the chuan ---
+User "1" o-left- "0..*" Notification
+User "1" *-right- "0..*" Post
+Post "1" *-right- "0..*" PostImage
+Post "1" *-right- "0..*" PostTag
+Tag "1" o-left- "0..*" PostTag
+
+' ===== Rib an: ep Entity xuong han tang duoi cung =====
+PostController -[hidden]down- Post
+ImageController -[hidden]down- PostImage
+NotificationController -[hidden]down- Notification
+
+@enduml

@@ -1,0 +1,160 @@
+@startuml class_quanlydanhmuc
+' ============================================================
+'  Bieu do lop - Chuc nang QUAN LY DANH MUC (admin)
+'  Bo cuc 3 hang thang:  TREN  = Page + Modal
+'                        GIUA  = Controller
+'                        DUOI  = Entity
+'  Quy uoc quan he:
+'   - Page  <-> Page/Modal   : composition (Page chua Modal)
+'   - Page  <-> Controller   : association
+'   - Entity <-> Controller  : association
+'   - Page  chua Entity      : composition
+'   - Entity <-> Entity      : theo so do lop thuc the chuan
+'  (Category dung 'icon' theo Prisma, khong co 'description')
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 110
+hide circle
+top to bottom direction
+
+' ==================== TANG TREN: PAGE + MODAL ====================
+class AdminHomePage {
+  - admin : User
+  - btnManageCategory : Button
+  + handleManageCategoryClick() : void
+}
+
+class ManageCategoryPage {
+  - admin : User
+  - categories : Category[]
+  - selectedCategory : Category
+  + loadCategories() : void
+  + handleAddCategory() : void
+  + handleEditCategory(c : Category) : void
+  + handleDeleteCategory(c : Category) : void
+}
+
+class AddCategoryModal {
+  - name : String
+  - icon : String
+  - btnAdd : Button
+  - btnCancel : Button
+  + handleAdd() : void
+  + handleCancel() : void
+}
+
+class EditCategoryModal {
+  - category : Category
+  - name : String
+  - icon : String
+  - btnSave : Button
+  - btnCancel : Button
+  + handleSave() : void
+  + handleCancel() : void
+}
+
+class ConfirmDeleteCategoryModal {
+  - category : Category
+  - message : String
+  - btnConfirm : Button
+  - btnCancel : Button
+  + handleConfirm() : void
+  + handleCancel() : void
+}
+
+' ==================== TANG GIUA: CONTROLLER ====================
+class CategoryController {
+  + getCategories() : Category[]
+  + addCategory(c : Category) : boolean
+  + updateCategory(c : Category) : boolean
+  + deleteCategory(c : Category) : boolean
+}
+class PostController {
+  + countPostsByCategory(c : Category) : int
+}
+
+' ==================== TANG DUOI: ENTITY ====================
+class User {
+  - id : int
+  - fullName : String
+  - email : String
+  - phone : String
+  - passwordHash : String
+  - avatarUrl : String
+  - role : Enum
+  - status : Enum
+  - createdAt : DateTime
+  - updatedAt : DateTime
+}
+
+class Category {
+  - id : int
+  - name : String
+  - icon : String
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - posts : Post[]
+}
+
+class Post {
+  - id : int
+  - title : String
+  - type : Enum
+  - description : String
+  - eventDate : DateTime
+  - address : String
+  - latitude : Float
+  - longitude : Float
+  - status : Enum
+  - userId : int
+  - categoryId : int
+  - createdAt : DateTime
+  - updatedAt : DateTime
+}
+
+' ========================= QUAN HE =========================
+
+' --- TANG TREN thang hang: Page <-> Page (assoc) + Page chua Modal (composition) ---
+AdminHomePage -right- ManageCategoryPage
+ManageCategoryPage *-right- AddCategoryModal
+ManageCategoryPage *-right- EditCategoryModal
+ManageCategoryPage *-right- ConfirmDeleteCategoryModal
+AddCategoryModal -[hidden]right- EditCategoryModal
+EditCategoryModal -[hidden]right- ConfirmDeleteCategoryModal
+
+' --- TANG GIUA thang hang: Controller ---
+CategoryController -[hidden]right- PostController
+
+' --- TANG DUOI thang hang: Entity ---
+User -[hidden]right- Category
+Category -[hidden]right- Post
+
+' --- Page <-> Controller : association (doc) ---
+ManageCategoryPage -- CategoryController
+AddCategoryModal -- CategoryController
+EditCategoryModal -- CategoryController
+ConfirmDeleteCategoryModal -- CategoryController
+ManageCategoryPage -- PostController
+
+' --- Entity <-> Controller : association (doc) ---
+CategoryController -- Category
+PostController -- Post
+
+' --- Page chua Entity : composition (doc) ---
+AdminHomePage *-- User
+ManageCategoryPage *-- User
+ManageCategoryPage *-- Category
+EditCategoryModal *-- Category
+ConfirmDeleteCategoryModal *-- Category
+
+' --- Entity <-> Entity : theo so do lop thuc the chuan ---
+Category "0..1" o-right- "0..*" Post
+
+' ===== Rib an: ep Entity xuong han tang duoi cung =====
+CategoryController -[hidden]down- Category
+PostController -[hidden]down- Post
+
+@enduml

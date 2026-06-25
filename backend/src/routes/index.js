@@ -7,11 +7,13 @@ const userController = require('../controllers/user.controller');
 const categoryController = require('../controllers/category.controller');
 const postController = require('../controllers/post.controller');
 const searchController = require('../controllers/search.controller');
-const conversationController = require('../controllers/conversation.controller');
+const chatRoomController = require('../controllers/chatroom.controller');
+const messageController = require('../controllers/message.controller');
 const notificationController = require('../controllers/notification.controller');
 const reportController = require('../controllers/report.controller');
 const statsController = require('../controllers/stats.controller');
-const uploadController = require('../controllers/upload.controller');
+const imageController = require('../controllers/image.controller');
+const aiVisionController = require('../controllers/aivision.controller');
 
 const router = express.Router();
 const upload = multer({
@@ -47,7 +49,8 @@ router.put('/users/profile', authenticate, userController.updateProfile);
 
 // ===== Categories =====
 router.get('/categories', categoryController.getCategories);
-router.post('/categories', authenticate, requireAdmin, categoryController.createCategory);
+router.get('/categories/:id/post-count', postController.countPostsByCategory);
+router.post('/categories', authenticate, requireAdmin, categoryController.addCategory);
 router.put('/categories/:id', authenticate, requireAdmin, categoryController.updateCategory);
 router.delete('/categories/:id', authenticate, requireAdmin, categoryController.deleteCategory);
 
@@ -55,6 +58,7 @@ router.delete('/categories/:id', authenticate, requireAdmin, categoryController.
 router.get('/posts', postController.getPosts);
 router.get('/posts/my', authenticate, postController.getMyPosts);
 router.get('/posts/:id', optionalAuth, postController.getPostById);
+router.get('/posts/:id/images', imageController.getImagesByPost);
 router.post('/posts', authenticate, postController.createPost);
 router.put('/posts/:id', authenticate, postController.updatePost);
 router.delete('/posts/:id', authenticate, postController.deletePost);
@@ -69,12 +73,12 @@ router.put('/admin/posts/:id/reject', authenticate, requireAdmin, postController
 router.get('/search/posts', searchController.searchPosts);
 router.get('/search/map', searchController.searchMap);
 
-// ===== Conversations & Messages =====
-router.get('/conversations', authenticate, conversationController.getConversations);
-router.get('/conversations/:id', authenticate, conversationController.getConversationById);
-router.post('/conversations', authenticate, conversationController.createConversation);
-router.get('/conversations/:id/messages', authenticate, conversationController.getMessages);
-router.post('/conversations/:id/messages', authenticate, conversationController.sendMessage);
+// ===== ChatRoom (Conversations) & Messages =====
+router.get('/conversations', authenticate, chatRoomController.getChatRooms);
+router.get('/conversations/:id', authenticate, chatRoomController.getChatRoomById);
+router.post('/conversations', authenticate, chatRoomController.findOrCreateChatRoom);
+router.get('/conversations/:id/messages', authenticate, messageController.getMessages);
+router.post('/conversations/:id/messages', authenticate, messageController.sendMessage);
 
 // ===== Notifications =====
 router.get('/notifications', authenticate, notificationController.getNotifications);
@@ -93,7 +97,7 @@ router.put('/admin/reports/:id/lock-user', authenticate, requireAdmin, reportCon
 router.get('/admin/stats', authenticate, requireAdmin, statsController.getStats);
 
 // ===== Upload & AI =====
-router.post('/upload/images', authenticate, upload.array('images', 3), uploadController.uploadImages);
-router.post('/ai/suggest-tags', authenticate, upload.array('images', 3), uploadController.suggestTags);
+router.post('/upload/images', authenticate, upload.array('images', 3), imageController.uploadImages);
+router.post('/ai/suggest-tags', authenticate, upload.array('images', 3), aiVisionController.analyzeImage);
 
 module.exports = router;

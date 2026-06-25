@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import Icon from '../../components/Icons';
 import { LoadingScreen, EmptyState, TypeBadge, StatusBadge, ConfirmModal } from '../../components/common';
@@ -13,6 +13,7 @@ const TABS = [
 
 export default function AdminPosts() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [tab, setTab] = useState('PENDING');
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,7 @@ export default function AdminPosts() {
   const [rejectTarget, setRejectTarget] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const load = () => {
+  const loadPendingPosts = () => {
     setLoading(true);
     api
       .get('/admin/posts', { params: { status: tab } })
@@ -29,14 +30,16 @@ export default function AdminPosts() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, [tab]);
+  useEffect(loadPendingPosts, [tab]);
+
+  const handleViewPost = (p) => navigate(`/admin/posts/${p.id}`);
 
   const approve = async (post) => {
     setBusy(true);
     try {
       await api.put(`/admin/posts/${post.id}/approve`);
       toast(`Đã duyệt bài "${post.title}"`);
-      load();
+      loadPendingPosts();
     } catch (err) {
       toast(err.response?.data?.message || 'Duyệt thất bại', 'error');
     } finally {
@@ -50,7 +53,7 @@ export default function AdminPosts() {
       await api.put(`/admin/posts/${rejectTarget.id}/reject`);
       toast(`Đã từ chối và xóa vĩnh viễn bài "${rejectTarget.title}"`);
       setRejectTarget(null);
-      load();
+      loadPendingPosts();
     } catch (err) {
       toast(err.response?.data?.message || 'Từ chối thất bại', 'error');
     } finally {
@@ -138,13 +141,13 @@ export default function AdminPosts() {
                     </td>
                     <td className="whitespace-nowrap px-5 py-3">
                       <div className="flex justify-end gap-1.5">
-                        <Link
-                          to={`/admin/posts/${p.id}`}
+                        <button
+                          onClick={() => handleViewPost(p)}
                           title="Xem chi tiết"
                           className="rounded-lg border border-gray-200 p-1.5 text-gray-500 hover:border-primary-300 hover:text-primary-700"
                         >
                           {Icon.eye('h-4 w-4')}
-                        </Link>
+                        </button>
                         {p.status === 'PENDING' && (
                           <>
                             <button

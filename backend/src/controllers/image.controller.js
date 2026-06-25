@@ -1,5 +1,9 @@
+const prisma = require('../config/prisma');
 const uploadService = require('../services/upload.service');
-const visionService = require('../services/vision.service');
+
+/**
+ * ImageController - xử lý hình ảnh minh chứng của bài đăng.
+ */
 
 // POST /api/upload/images  (multipart, field "images", tối đa 3)
 async function uploadImages(req, res, next) {
@@ -16,18 +20,18 @@ async function uploadImages(req, res, next) {
   }
 }
 
-// POST /api/ai/suggest-tags  (multipart field "images" hoặc JSON {filenames})
-async function suggestTags(req, res, next) {
+// GET /api/posts/:id/images  -> getImagesByPost(p): PostImage[]
+async function getImagesByPost(req, res, next) {
   try {
-    let files = req.files || [];
-    if (files.length === 0 && Array.isArray(req.body?.filenames)) {
-      files = req.body.filenames.map((name) => ({ originalname: name, buffer: Buffer.alloc(0) }));
-    }
-    const tags = await visionService.suggestTags(files);
-    res.json({ tags });
+    const postId = Number(req.params.id);
+    const images = await prisma.postImage.findMany({
+      where: { postId },
+      orderBy: { id: 'asc' },
+    });
+    res.json({ images });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { uploadImages, suggestTags };
+module.exports = { uploadImages, getImagesByPost };

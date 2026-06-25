@@ -1,0 +1,103 @@
+@startuml class_quanlythongbao
+' ============================================================
+'  Bieu do lop - Chuc nang QUAN LY THONG BAO
+'  Bo cuc 3 hang thang:  TREN  = Page
+'                        GIUA  = Controller
+'                        DUOI  = Entity
+'  Quy uoc quan he:
+'   - Page   <-> Page       : association
+'   - Page   <-> Controller : association
+'   - Entity <-> Controller : association
+'   - Page   chua Entity    : composition
+'   - Entity <-> Entity     : theo so do lop thuc the chuan
+'  (Notification.targetUrl la chuoi dieu huong -> khong lien ket
+'   truc tiep toi Post/ChatRoom/Message)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 110
+hide circle
+top to bottom direction
+
+' ==================== TANG TREN: PAGE ====================
+class MemberHomePage {
+  - u : User
+  - btnNotification : Button
+  - unreadBadge : int
+  + handleOpenNotification() : void
+  + updateUnreadBadge(count : int) : void
+}
+
+class NotificationPage {
+  - u : User
+  - notifications : Notification[]
+  - selectedNotification : Notification
+  + loadNotifications() : void
+  + handleSelectNotification(n : Notification) : void
+  + navigateToTarget(n : Notification) : void
+}
+
+' ==================== TANG GIUA: CONTROLLER ====================
+class NotificationController {
+  + getNotifications(u : User) : Notification[]
+  + markAsRead(n : Notification) : boolean
+  + markAllAsRead(u : User) : boolean
+  + createNotification(n : Notification) : boolean
+  + pushNotification(n : Notification) : boolean
+}
+
+' ==================== TANG DUOI: ENTITY ====================
+class User {
+  - id : int
+  - fullName : String
+  - email : String
+  - phone : String
+  - passwordHash : String
+  - avatarUrl : String
+  - role : Enum
+  - status : Enum
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - posts : Post[]
+  - chatRooms : ChatRoom[]
+  - messages : Message[]
+  - notifications : Notification[]
+}
+
+class Notification {
+  - id : int
+  - userId : int
+  - type : String
+  - content : String
+  - targetUrl : String
+  - isRead : Boolean
+  - createdAt : DateTime
+}
+
+' ========================= QUAN HE =========================
+
+' --- TANG TREN thang hang: Page <-> Page (association) ---
+MemberHomePage -right- NotificationPage
+
+' --- TANG DUOI thang hang: Entity <-> Entity (so do lop thuc the chuan) ---
+User "1" o-right- "0..*" Notification
+
+' --- Page <-> Controller : association (doc) ---
+MemberHomePage -- NotificationController
+NotificationPage -- NotificationController
+
+' --- Entity <-> Controller : association (doc) ---
+NotificationController -- Notification
+
+' --- Page chua Entity : composition (doc) ---
+MemberHomePage *-- User
+NotificationPage *-- User
+NotificationPage *-- Notification
+
+' ===== Rib an: ep Entity xuong han tang duoi cung =====
+NotificationController -[hidden]down- User
+NotificationController -[hidden]down- Notification
+
+@enduml

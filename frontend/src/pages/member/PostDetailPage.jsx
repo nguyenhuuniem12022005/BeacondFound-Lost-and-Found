@@ -34,7 +34,7 @@ export default function PostDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const startChat = async () => {
+  const handleMessageClick = async () => {
     setCreatingConv(true);
     try {
       const res = await api.post('/conversations', { postId: post.id });
@@ -163,7 +163,7 @@ export default function PostDetailPage() {
             </p>
             {!isOwner ? (
               <>
-                <button onClick={startChat} disabled={creatingConv} className="btn-primary mt-4 w-full py-2.5">
+                <button onClick={handleMessageClick} disabled={creatingConv} className="btn-primary mt-4 w-full py-2.5">
                   {Icon.chat('h-4 w-4')} {creatingConv ? 'Đang mở...' : 'Nhắn tin cho chủ bài'}
                 </button>
                 <button

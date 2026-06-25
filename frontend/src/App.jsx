@@ -9,20 +9,20 @@ import LandingPage from './pages/public/LandingPage';
 import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 
-import HomePage from './pages/member/HomePage';
+import MemberHomePage from './pages/member/MemberHomePage';
 import MapSearchPage from './pages/member/MapSearchPage';
 import PostDetailPage from './pages/member/PostDetailPage';
 import CreatePostPage from './pages/member/CreatePostPage';
 import EditPostPage from './pages/member/EditPostPage';
 import ProfilePage from './pages/member/ProfilePage';
 import EditProfilePage from './pages/member/EditProfilePage';
-import NotificationsPage from './pages/member/NotificationsPage';
+import NotificationPage from './pages/member/NotificationPage';
 import MessagesPage from './pages/member/MessagesPage';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminPosts from './pages/admin/AdminPosts';
 import AdminPostDetail from './pages/admin/AdminPostDetail';
-import AdminCategories from './pages/admin/AdminCategories';
+import ManageCategoryPage from './pages/admin/AdminCategories';
 import AdminReports from './pages/admin/AdminReports';
 import AdminReportDetail from './pages/admin/AdminReportDetail';
 
@@ -60,15 +60,15 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/search" element={<HomePage />} />
+        <Route path="/home" element={<MemberHomePage />} />
+        <Route path="/search" element={<MemberHomePage />} />
         <Route path="/map" element={<MapSearchPage />} />
         <Route path="/posts/:id" element={<PostDetailPage />} />
         <Route path="/posts/:id/edit" element={<EditPostPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/my-posts" element={<ProfilePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/messages" element={<MessagesPage />} />
         <Route path="/messages/:id" element={<MessagesPage />} />
       </Route>
@@ -95,7 +95,7 @@ export default function App() {
         <Route index element={<AdminDashboard />} />
         <Route path="posts" element={<AdminPosts />} />
         <Route path="posts/:id" element={<AdminPostDetail />} />
-        <Route path="categories" element={<AdminCategories />} />
+        <Route path="categories" element={<ManageCategoryPage />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="reports/:id" element={<AdminReportDetail />} />
       </Route>

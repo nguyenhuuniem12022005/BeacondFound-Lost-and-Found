@@ -1,0 +1,185 @@
+@startuml class_traodoitinnhan
+' ============================================================
+'  Bieu do lop - Chuc nang TRAO DOI TIN NHAN
+'  Bo cuc 3 hang thang:  TREN  = Page
+'                        GIUA  = Controller
+'                        DUOI  = Entity
+'  Quy uoc quan he:
+'   - Page   <-> Page       : association
+'   - Page   <-> Controller : association
+'   - Entity <-> Controller : association
+'   - Page   chua Entity    : composition
+'   - Entity <-> Entity     : theo so do lop thuc the chuan
+'  (ChatRoom = bang Conversation trong Prisma)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 110
+hide circle
+top to bottom direction
+
+' ==================== TANG TREN: PAGE ====================
+class PostDetailPage {
+  - u : User
+  - post : Post
+  - imageList : PostImage[]
+  - tagList : Tag[]
+  - mapComponent : Map
+  - btnMessage : Button
+  + handleMessageClick() : void
+}
+
+class ChatPage {
+  - u : User
+  - chatRoom : ChatRoom
+  - messages : Message[]
+  - relatedPost : Post
+  - inputContent : String
+  - btnSend : Button
+  - btnAttachImage : Button
+  + handleSendMessage() : void
+  + displayMessages() : void
+}
+
+class ChatListPage {
+  - u : User
+  - searchKeyword : String
+  - chatRooms : ChatRoom[]
+  + handleSearch() : void
+  + handleSelectChatRoom(c : ChatRoom) : void
+}
+
+' ==================== TANG GIUA: CONTROLLER ====================
+class ChatRoomController {
+  + findOrCreateChatRoom(sender : User, receiver : User, p : Post) : ChatRoom
+  + getChatRooms(u : User) : ChatRoom[]
+}
+class MessageController {
+  + getMessages(c : ChatRoom) : Message[]
+  + sendMessage(m : Message) : boolean
+}
+class SocketController {
+  + pushMessage(m : Message) : boolean
+}
+class NotificationController {
+  + createNotification(n : Notification) : boolean
+  + pushNotification(n : Notification) : boolean
+}
+
+' ==================== TANG DUOI: ENTITY ====================
+class User {
+  - id : int
+  - fullName : String
+  - email : String
+  - phone : String
+  - passwordHash : String
+  - avatarUrl : String
+  - role : Enum
+  - status : Enum
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - posts : Post[]
+  - chatRooms : ChatRoom[]
+  - messages : Message[]
+  - notifications : Notification[]
+}
+
+class Post {
+  - id : int
+  - title : String
+  - type : Enum
+  - description : String
+  - eventDate : DateTime
+  - address : String
+  - latitude : Float
+  - longitude : Float
+  - status : Enum
+  - userId : int
+  - categoryId : int
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - conversations : ChatRoom[]
+}
+
+class ChatRoom {
+  - id : int
+  - postId : int
+  - memberOneId : int
+  - memberTwoId : int
+  - createdAt : DateTime
+  - updatedAt : DateTime
+  - messages : Message[]
+}
+
+class Message {
+  - id : int
+  - conversationId : int
+  - senderId : int
+  - content : String
+  - isRead : Boolean
+  - createdAt : DateTime
+}
+
+class Notification {
+  - id : int
+  - userId : int
+  - type : String
+  - content : String
+  - targetUrl : String
+  - isRead : Boolean
+  - createdAt : DateTime
+}
+
+' ========================= QUAN HE =========================
+
+' --- TANG TREN thang hang: Page <-> Page (association) ---
+PostDetailPage -right- ChatPage
+ChatPage -right- ChatListPage
+
+' --- TANG GIUA thang hang: Controller ---
+ChatRoomController -[hidden]right- MessageController
+MessageController -[hidden]right- SocketController
+SocketController -[hidden]right- NotificationController
+
+' --- TANG DUOI thang hang: Entity ---
+User -[hidden]right- Post
+Post -[hidden]right- ChatRoom
+ChatRoom -[hidden]right- Message
+Message -[hidden]right- Notification
+
+' --- Page <-> Controller : association (doc) ---
+PostDetailPage -- ChatRoomController
+ChatListPage -- ChatRoomController
+ChatPage -- MessageController
+ChatPage -- SocketController
+ChatPage -- NotificationController
+
+' --- Entity <-> Controller : association (doc) ---
+ChatRoomController -- ChatRoom
+MessageController -- Message
+SocketController -- Message
+NotificationController -- Notification
+
+' --- Page chua Entity : composition (doc) ---
+PostDetailPage *-- User
+PostDetailPage *-- Post
+ChatListPage *-- ChatRoom
+ChatPage *-- ChatRoom
+ChatPage *-- Message
+
+' --- Entity <-> Entity : theo so do lop thuc the chuan ---
+User "1" *-right- "0..*" Post
+User "1..*" o-right- "0..*" ChatRoom
+Post "0..1" o-right- "0..*" ChatRoom
+ChatRoom "1" *-right- "0..*" Message
+User "1" o-right- "0..*" Message
+User "1" o-right- "0..*" Notification
+
+' ===== Rib an: ep Entity xuong han tang duoi cung =====
+ChatRoomController -[hidden]down- ChatRoom
+MessageController -[hidden]down- Message
+NotificationController -[hidden]down- Notification
+
+@enduml

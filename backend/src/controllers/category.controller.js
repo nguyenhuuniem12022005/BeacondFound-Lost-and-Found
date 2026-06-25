@@ -13,8 +13,8 @@ async function getCategories(req, res, next) {
   }
 }
 
-// POST /api/categories (admin)
-async function createCategory(req, res, next) {
+// POST /api/categories (admin)  -> addCategory(c): boolean
+async function addCategory(req, res, next) {
   try {
     const { name, icon } = req.body;
     if (!name || !name.trim()) {
@@ -58,4 +58,4 @@ async function deleteCategory(req, res, next) {
   }
 }
 
-module.exports = { getCategories, createCategory, updateCategory, deleteCategory };
+module.exports = { getCategories, addCategory, updateCategory, deleteCategory };

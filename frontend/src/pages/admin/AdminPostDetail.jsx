@@ -13,6 +13,7 @@ export default function AdminPostDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [post, setPost] = useState(null);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(null); // 'approve' | 'reject'
@@ -23,9 +24,17 @@ export default function AdminPostDetail() {
       .then((res) => setPost(res.data.post))
       .catch(() => navigate('/admin/posts'))
       .finally(() => setLoading(false));
+    // Lấy ảnh minh chứng qua ImageController.getImagesByPost
+    api
+      .get(`/posts/${id}/images`)
+      .then((res) => setImages(res.data.images))
+      .catch(() => setImages([]));
   }, [id]);
 
-  const act = async () => {
+  const handleApprove = () => setConfirm('approve');
+  const handleReject = () => setConfirm('reject');
+
+  const confirmAction = async () => {
     setBusy(true);
     try {
       if (confirm === 'approve') {
@@ -56,10 +65,10 @@ export default function AdminPostDetail() {
         <div className="flex gap-2">
           {post.status === 'PENDING' && (
             <>
-              <button onClick={() => setConfirm('approve')} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+              <button onClick={handleApprove} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
                 {Icon.check('h-4 w-4')} Duyệt bài
               </button>
-              <button onClick={() => setConfirm('reject')} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+              <button onClick={handleReject} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
                 {Icon.x('h-4 w-4')} Từ chối
               </button>
             </>
@@ -100,10 +109,10 @@ export default function AdminPostDetail() {
 
           {/* Ảnh minh chứng */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-card">
-            <h2 className="font-bold text-gray-900">Ảnh minh chứng ({post.images?.length || 0})</h2>
-            {post.images?.length ? (
+            <h2 className="font-bold text-gray-900">Ảnh minh chứng ({images.length})</h2>
+            {images.length ? (
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {post.images.map((img) => (
+                {images.map((img) => (
                   <a key={img.id} href={img.imageUrl} target="_blank" rel="noreferrer" className="block h-36 overflow-hidden rounded-xl border border-gray-100">
                     <img src={img.imageUrl} alt="" className="h-full w-full object-cover transition hover:scale-105" />
                   </a>
@@ -144,7 +153,7 @@ export default function AdminPostDetail() {
       <ConfirmModal
         open={!!confirm}
         onClose={() => setConfirm(null)}
-        onConfirm={act}
+        onConfirm={confirmAction}
         loading={busy}
         danger={confirm !== 'approve'}
         title={confirm === 'approve' ? 'Duyệt bài đăng' : 'Từ chối bài đăng'}

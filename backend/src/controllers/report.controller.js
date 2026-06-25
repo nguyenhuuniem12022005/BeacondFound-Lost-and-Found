@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const notificationService = require('../services/notification.service');
+const notificationController = require('./notification.controller');
 
 const REPORT_INCLUDE = {
   reporter: { select: { id: true, fullName: true, email: true, avatarUrl: true } },
@@ -74,7 +74,7 @@ async function resolveReport(req, res, next) {
       data: { status: 'RESOLVED' },
       include: REPORT_INCLUDE,
     });
-    await notificationService.createNotification({
+    await notificationController.createNotification({
       userId: report.reporterId,
       type: 'REPORT_RESOLVED',
       content: 'Báo cáo vi phạm của bạn đã được xử lý. Cảm ơn bạn đã góp phần xây dựng cộng đồng an toàn.',
@@ -95,7 +95,7 @@ async function rejectReport(req, res, next) {
       data: { status: 'REJECTED' },
       include: REPORT_INCLUDE,
     });
-    await notificationService.createNotification({
+    await notificationController.createNotification({
       userId: report.reporterId,
       type: 'REPORT_REJECTED',
       content: 'Báo cáo vi phạm của bạn đã được xem xét và bị từ chối do không đủ căn cứ.',
@@ -159,7 +159,7 @@ async function lockReportedUser(req, res, next) {
       return { user, report, notification };
     });
 
-    notificationService.dispatchNotification(result.notification);
+    notificationController.pushNotification(result.notification);
     res.json({ user: result.user, report: result.report });
   } catch (err) {
     next(err);

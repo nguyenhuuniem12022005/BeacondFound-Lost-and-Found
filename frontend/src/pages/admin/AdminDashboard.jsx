@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import Icon from '../../components/Icons';
 import { LoadingScreen, StatusBadge } from '../../components/common';
@@ -8,10 +8,14 @@ import { timeAgo, POST_STATUS, REPORT_STATUS } from '../../utils/format';
 const ACTIVITY_STATUS = { ...POST_STATUS, ...REPORT_STATUS, ACTIVE: { label: 'Hoạt động', class: 'bg-emerald-100 text-emerald-700' } };
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState('week');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const handleManagePostClick = () => navigate('/admin/posts');
+  const handleManageCategoryClick = () => navigate('/admin/categories');
 
   useEffect(() => {
     setLoading(true);
@@ -53,21 +57,29 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold text-gray-900">Tổng quan hệ thống</h1>
-        <div className="flex rounded-lg border border-gray-200 bg-white p-0.5">
-          {[
-            { value: 'week', label: 'Tuần' },
-            { value: 'month', label: 'Tháng' },
-          ].map((p) => (
-            <button
-              key={p.value}
-              onClick={() => setPeriod(p.value)}
-              className={`rounded-md px-4 py-1.5 text-sm font-semibold ${
-                period === p.value ? 'bg-primary-700 text-white' : 'text-gray-500 hover:text-gray-800'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={handleManagePostClick} className="inline-flex items-center gap-2 rounded-lg bg-primary-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-800">
+            {Icon.document('h-4 w-4')} Quản lý bài đăng
+          </button>
+          <button onClick={handleManageCategoryClick} className="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-white px-3 py-1.5 text-sm font-semibold text-primary-700 hover:bg-primary-50">
+            {Icon.folder('h-4 w-4')} Quản lý danh mục
+          </button>
+          <div className="flex rounded-lg border border-gray-200 bg-white p-0.5">
+            {[
+              { value: 'week', label: 'Tuần' },
+              { value: 'month', label: 'Tháng' },
+            ].map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
+                className={`rounded-md px-4 py-1.5 text-sm font-semibold ${
+                  period === p.value ? 'bg-primary-700 text-white' : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

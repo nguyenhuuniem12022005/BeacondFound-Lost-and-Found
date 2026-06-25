@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
-const notificationService = require('../services/notification.service');
+const notificationController = require('./notification.controller');
+const tagController = require('./tag.controller');
 
 const POST_INCLUDE = {
   user: { select: { id: true, fullName: true, avatarUrl: true, email: true, createdAt: true } },
@@ -12,20 +13,6 @@ function formatPost(post) {
   if (!post) return post;
   const { postTags, ...rest } = post;
   return { ...rest, tags: (postTags || []).map((pt) => pt.tag) };
-}
-
-async function attachTags(postId, tagNames = []) {
-  await prisma.postTag.deleteMany({ where: { postId } });
-  for (const raw of tagNames) {
-    const name = String(raw).trim().toLowerCase();
-    if (!name) continue;
-    const tag = await prisma.tag.upsert({ where: { name }, update: {}, create: { name } });
-    await prisma.postTag.upsert({
-      where: { postId_tagId: { postId, tagId: tag.id } },
-      update: {},
-      create: { postId, tagId: tag.id },
-    });
-  }
 }
 
 // GET /api/posts  (feed công khai - chỉ bài ACTIVE)
@@ -109,7 +96,7 @@ async function createPost(req, res, next) {
         images: { create: images.map((url) => ({ imageUrl: url })) },
       },
     });
-    await attachTags(post.id, tags);
+    await tagController.addPostTags(post.id, tags);
     const full = await prisma.post.findUnique({ where: { id: post.id }, include: POST_INCLUDE });
     res.status(201).json({ post: formatPost(full) });
   } catch (err) {
@@ -155,7 +142,7 @@ async function updatePost(req, res, next) {
       });
     }
     if (Array.isArray(tags)) {
-      await attachTags(id, tags);
+      await tagController.addPostTags(id, tags);
     }
     const full = await prisma.post.findUnique({ where: { id }, include: POST_INCLUDE });
     res.json({ post: formatPost(full) });
@@ -187,7 +174,7 @@ async function deletePost(req, res, next) {
         await tx.post.delete({ where: { id } });
         return createdNotification;
       });
-      notificationService.dispatchNotification(notification);
+      notificationController.pushNotification(notification);
     } else {
       await prisma.post.delete({ where: { id } });
     }
@@ -237,7 +224,7 @@ async function approvePost(req, res, next) {
       data: { status: 'ACTIVE' },
       include: POST_INCLUDE,
     });
-    await notificationService.createNotification({
+    await notificationController.createNotification({
       userId: post.userId,
       type: 'POST_APPROVED',
       content: `Bài đăng "${post.title}" của bạn đã được duyệt và hiển thị công khai.`,
@@ -273,8 +260,19 @@ async function rejectPost(req, res, next) {
       await tx.post.delete({ where: { id } });
       return createdNotification;
     });
-    notificationService.dispatchNotification(notification);
+    notificationController.pushNotification(notification);
     res.json({ message: 'Đã từ chối và xóa vĩnh viễn bài đăng' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/categories/:id/post-count  -> countPostsByCategory(c): int
+async function countPostsByCategory(req, res, next) {
+  try {
+    const categoryId = Number(req.params.id);
+    const count = await prisma.post.count({ where: { categoryId } });
+    res.json({ count });
   } catch (err) {
     next(err);
   }
@@ -291,6 +289,7 @@ module.exports = {
   getAllPostsAdmin,
   approvePost,
   rejectPost,
+  countPostsByCategory,
   formatPost,
   POST_INCLUDE,
 };

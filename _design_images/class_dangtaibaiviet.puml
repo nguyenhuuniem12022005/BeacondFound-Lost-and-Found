@@ -1,0 +1,193 @@
+@startuml class_dangtaibaiviet
+' ============================================================
+'  Bieu do lop - Chuc nang DANG TAI BAI VIET
+'  Bo cuc 3 hang thang:  TREN  = Page + Panel
+'                        GIUA  = Controller
+'                        DUOI  = Entity
+'  - Cac duong noi KHONG ghi chu (role name)
+'  - Trong cung 1 tang: noi ngang (thang hang)
+'  - Giua cac tang: noi doc
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 110
+hide circle
+top to bottom direction
+
+' ==================== TANG TREN: PAGE + PANEL ====================
+class MemberHomePage {
+  - u : User
+  - postList : Post[]
+  - btnCreatePost : Button
+  + handleCreatePostClick() : void
+}
+
+class CreatePostPage {
+  - u : User
+  - postDraft : Post
+  - currentStep : int
+  + nextStep() : void
+  + previousStep() : void
+  + submitPost() : void
+}
+
+class CreatePostStep1Panel {
+  - selectedType : String
+  - selectedCategory : Category
+  - title : String
+  + handleNext() : void
+}
+
+class CreatePostStep2Panel {
+  - description : Text
+  - eventDate : DateTime
+  + handleNext() : void
+  + handleBack() : void
+}
+
+class CreatePostStep3Panel {
+  - address : String
+  - latitude : double
+  - longitude : double
+  + handlePinLocation() : void
+  + handleNext() : void
+  + handleBack() : void
+}
+
+class CreatePostStep4Panel {
+  - images : PostImage[]
+  - suggestedTags : Tag[]
+  - selectedTags : Tag[]
+  + handleUploadImages() : void
+  + handleRemoveTag(t : Tag) : void
+  + handleSubmit() : void
+}
+
+' ==================== TANG GIUA: CONTROLLER ====================
+class PostController {
+  + createPost(p : Post) : boolean
+}
+class CategoryController {
+  + getCategories() : Category[]
+}
+class ImageController {
+  + uploadImages(images : PostImage[]) : String[]
+}
+class TagController {
+  + getOrCreateTags(tags : Tag[]) : Tag[]
+  + addPostTags(p : Post, tags : Tag[]) : boolean
+}
+class AIVisionController {
+  + analyzeImage(images : Image[]) : Tag[]
+}
+
+' ==================== TANG DUOI: ENTITY ====================
+class User {
+  - id : int
+  - fullName : String
+  - email : String
+  - phone : String
+  - passwordHash : String
+  - avatarUrl : String
+  - role : Enum
+  - status : Enum
+  - createdAt : DateTime
+  - updatedAt : DateTime
+}
+
+class Post {
+  - id : int
+  - title : String
+  - type : Enum
+  - description : String
+  - eventDate : DateTime
+  - address : String
+  - latitude : Float
+  - longitude : Float
+  - status : Enum
+  - userId : int
+  - categoryId : int
+  - createdAt : DateTime
+  - updatedAt : DateTime
+}
+
+class Category {
+  - id : int
+  - name : String
+  - icon : String
+  - createdAt : DateTime
+  - updatedAt : DateTime
+}
+
+class PostImage {
+  - id : int
+  - postId : int
+  - imageUrl : String
+  - createdAt : DateTime
+}
+
+class Tag {
+  - id : int
+  - name : String
+}
+
+class PostTag {
+  - postId : int
+  - tagId : int
+}
+
+' ========================= QUAN HE =========================
+
+' --- TANG TREN thang hang (ngang) ---
+MemberHomePage -right- CreatePostPage
+CreatePostPage *-right- CreatePostStep1Panel
+CreatePostPage *-right- CreatePostStep2Panel
+CreatePostPage *-right- CreatePostStep3Panel
+CreatePostPage *-right- CreatePostStep4Panel
+CreatePostStep1Panel -[hidden]right- CreatePostStep2Panel
+CreatePostStep2Panel -[hidden]right- CreatePostStep3Panel
+CreatePostStep3Panel -[hidden]right- CreatePostStep4Panel
+
+' --- TANG GIUA thang hang (ngang) ---
+PostController -[hidden]right- CategoryController
+CategoryController -[hidden]right- ImageController
+ImageController -[hidden]right- TagController
+TagController -[hidden]right- AIVisionController
+
+' --- TANG DUOI thang hang (ngang) ---
+User -[hidden]right- Post
+Post -[hidden]right- Category
+Category -[hidden]right- PostImage
+PostImage -[hidden]right- PostTag
+PostTag -[hidden]right- Tag
+
+' --- Page <-> Controller : association (doc, khong chu) ---
+CreatePostPage -- PostController
+CreatePostPage -- CategoryController
+CreatePostPage -- ImageController
+CreatePostPage -- TagController
+CreatePostPage -- AIVisionController
+
+' --- Entity <-> Controller : association (doc, khong chu) ---
+PostController -- Post
+CategoryController -- Category
+ImageController -- PostImage
+TagController -- Tag
+TagController -- PostTag
+AIVisionController -- Tag
+
+' --- Page chua Entity : composition (doc, khong chu) ---
+MemberHomePage *-- User
+MemberHomePage *-- Post
+CreatePostPage *-- Post
+
+' --- Entity <-> Entity : ngang, chi giu so luong, khong chu ---
+User "1" *-right- "0..*" Post
+Category "0..1" o-left- "0..*" Post
+Post "1" *-right- "0..*" PostImage
+Post "1" *-right- "0..*" PostTag
+Tag "1" o-left- "0..*" PostTag
+
+@enduml
