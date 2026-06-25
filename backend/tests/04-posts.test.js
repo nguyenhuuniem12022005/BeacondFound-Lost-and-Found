@@ -1,6 +1,6 @@
 /**
- * TEST CHỨC NĂNG: Bài đăng - tạo / duyệt / sửa / xóa / resolve
- * Kiểm tra toàn bộ vòng đời: PENDING -> ACTIVE -> RESOLVED / REJECTED / DELETED
+ * TEST CHỨC NĂNG: Bài đăng - tạo / duyệt / từ chối / sửa / xóa
+ * Kiểm tra toàn bộ vòng đời: PENDING -> ACTIVE hoặc bị xóa vĩnh viễn
  */
 const {
   app,
@@ -119,14 +119,14 @@ describe('Quy trình duyệt bài (moderation)', () => {
     expect(notif.content).toContain(post.title);
   });
 
-  test('admin từ chối bài -> REJECTED + thông báo kèm lý do', async () => {
+  test('admin từ chối bài -> xóa vĩnh viễn + thông báo kèm lý do', async () => {
     const post = await createPost(owner.token);
     const res = await request(app)
       .put(`/api/admin/posts/${post.id}/reject`)
       .set(auth(admin.token))
       .send({ reason: 'Thiếu thông tin liên hệ' });
     expect(res.status).toBe(200);
-    expect(res.body.post.status).toBe('REJECTED');
+    expect(await prisma.post.findUnique({ where: { id: post.id } })).toBeNull();
 
     const notif = await prisma.notification.findFirst({
       where: { userId: owner.user.id, type: 'POST_REJECTED' },
@@ -166,28 +166,12 @@ describe('PUT /api/posts/:id - Sửa bài đăng', () => {
   });
 });
 
-describe('Resolve & Delete bài đăng', () => {
-  test('chủ bài đánh dấu đã tìm thấy -> RESOLVED', async () => {
-    const post = await createActivePost(owner.token, admin.token);
-    const res = await request(app)
-      .put(`/api/posts/${post.id}/resolve`)
-      .set(auth(owner.token));
-    expect(res.status).toBe(200);
-    expect(res.body.post.status).toBe('RESOLVED');
-  });
-
-  test('người khác resolve bài -> 403', async () => {
-    const post = await createActivePost(owner.token, admin.token);
-    const res = await request(app)
-      .put(`/api/posts/${post.id}/resolve`)
-      .set(auth(other.token));
-    expect(res.status).toBe(403);
-  });
-
+describe('Delete bài đăng', () => {
   test('chủ bài xóa bài -> biến mất khỏi feed, xem chi tiết -> 404', async () => {
     const post = await createActivePost(owner.token, admin.token);
     const del = await request(app).delete(`/api/posts/${post.id}`).set(auth(owner.token));
     expect(del.status).toBe(200);
+    expect(await prisma.post.findUnique({ where: { id: post.id } })).toBeNull();
 
     const feed = await request(app).get('/api/posts');
     expect(feed.body.posts.find((p) => p.id === post.id)).toBeUndefined();

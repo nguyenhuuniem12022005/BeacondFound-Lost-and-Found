@@ -9,9 +9,6 @@ import { useToast } from '../../context/ToastContext';
 const TABS = [
   { value: 'PENDING', label: 'Chờ duyệt' },
   { value: 'ACTIVE', label: 'Đang hiển thị' },
-  { value: 'REJECTED', label: 'Đã từ chối' },
-  { value: 'RESOLVED', label: 'Đã giải quyết' },
-  { value: 'DELETED', label: 'Đã xóa' },
 ];
 
 export default function AdminPosts() {
@@ -51,7 +48,7 @@ export default function AdminPosts() {
     setBusy(true);
     try {
       await api.put(`/admin/posts/${rejectTarget.id}/reject`);
-      toast(`Đã từ chối bài "${rejectTarget.title}"`);
+      toast(`Đã từ chối và xóa vĩnh viễn bài "${rejectTarget.title}"`);
       setRejectTarget(null);
       load();
     } catch (err) {
@@ -187,7 +184,7 @@ export default function AdminPosts() {
         onConfirm={reject}
         loading={busy}
         title="Từ chối bài đăng"
-        message={`Từ chối bài "${rejectTarget?.title}"? Hệ thống sẽ gửi thông báo đến người đăng.`}
+        message={`Từ chối bài "${rejectTarget?.title}"? Bài viết sẽ bị xóa vĩnh viễn khỏi hệ thống và thành viên sẽ nhận được thông báo.`}
         confirmText="Từ chối"
       />
     </div>

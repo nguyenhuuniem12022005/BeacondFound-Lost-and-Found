@@ -52,7 +52,7 @@ async function getPosts(req, res, next) {
 async function getMyPosts(req, res, next) {
   try {
     const posts = await prisma.post.findMany({
-      where: { userId: req.user.id, status: { not: 'DELETED' } },
+      where: { userId: req.user.id },
       include: POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -67,12 +67,12 @@ async function getPostById(req, res, next) {
   try {
     const id = Number(req.params.id);
     const post = await prisma.post.findUnique({ where: { id }, include: POST_INCLUDE });
-    if (!post || post.status === 'DELETED') {
+    if (!post) {
       return res.status(404).json({ message: 'Không tìm thấy bài đăng' });
     }
     const isOwner = req.user && req.user.id === post.userId;
     const isAdmin = req.user && req.user.role === 'ADMIN';
-    if (post.status !== 'ACTIVE' && post.status !== 'RESOLVED' && !isOwner && !isAdmin) {
+    if (post.status !== 'ACTIVE' && !isOwner && !isAdmin) {
       return res.status(403).json({ message: 'Bài đăng chưa được duyệt' });
     }
     res.json({ post: formatPost(post) });
@@ -122,7 +122,7 @@ async function updatePost(req, res, next) {
   try {
     const id = Number(req.params.id);
     const post = await prisma.post.findUnique({ where: { id } });
-    if (!post || post.status === 'DELETED') {
+    if (!post) {
       return res.status(404).json({ message: 'Không tìm thấy bài đăng' });
     }
     if (post.userId !== req.user.id && req.user.role !== 'ADMIN') {
@@ -173,37 +173,25 @@ async function deletePost(req, res, next) {
     if (post.userId !== req.user.id && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Bạn không có quyền xóa bài đăng này' });
     }
-    await prisma.post.update({ where: { id }, data: { status: 'DELETED' } });
-
     if (req.user.role === 'ADMIN' && post.userId !== req.user.id) {
-      await notificationService.createNotification({
-        userId: post.userId,
-        type: 'POST_DELETED',
-        content: `Bài đăng "${post.title}" của bạn đã bị xóa do vi phạm quy định.`,
-        targetUrl: null,
+      const content = `Bài đăng "${post.title}" của bạn đã bị xóa do vi phạm quy định.`;
+      const notification = await prisma.$transaction(async (tx) => {
+        const createdNotification = await tx.notification.create({
+          data: {
+            userId: post.userId,
+            type: 'POST_DELETED',
+            content,
+            targetUrl: null,
+          },
+        });
+        await tx.post.delete({ where: { id } });
+        return createdNotification;
       });
+      notificationService.dispatchNotification(notification);
+    } else {
+      await prisma.post.delete({ where: { id } });
     }
-    res.json({ message: 'Đã xóa bài đăng' });
-  } catch (err) {
-    next(err);
-  }
-}
-
-// PUT /api/posts/:id/resolve
-async function resolvePost(req, res, next) {
-  try {
-    const id = Number(req.params.id);
-    const post = await prisma.post.findUnique({ where: { id } });
-    if (!post) return res.status(404).json({ message: 'Không tìm thấy bài đăng' });
-    if (post.userId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Bạn không có quyền cập nhật bài đăng này' });
-    }
-    const updated = await prisma.post.update({
-      where: { id },
-      data: { status: 'RESOLVED' },
-      include: POST_INCLUDE,
-    });
-    res.json({ post: formatPost(updated) });
+    res.json({ message: 'Đã xóa vĩnh viễn bài đăng' });
   } catch (err) {
     next(err);
   }
@@ -266,18 +254,27 @@ async function rejectPost(req, res, next) {
   try {
     const id = Number(req.params.id);
     const { reason } = req.body || {};
-    const post = await prisma.post.update({
-      where: { id },
-      data: { status: 'REJECTED' },
-      include: POST_INCLUDE,
+    const post = await prisma.post.findUnique({ where: { id } });
+    if (!post) return res.status(404).json({ message: 'Không tìm thấy bài đăng' });
+    if (post.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Chỉ có thể từ chối bài đăng đang chờ duyệt' });
+    }
+
+    const content = `Bài đăng "${post.title}" của bạn đã bị từ chối${reason ? `: ${reason}` : '.'}`;
+    const notification = await prisma.$transaction(async (tx) => {
+      const createdNotification = await tx.notification.create({
+        data: {
+          userId: post.userId,
+          type: 'POST_REJECTED',
+          content,
+          targetUrl: null,
+        },
+      });
+      await tx.post.delete({ where: { id } });
+      return createdNotification;
     });
-    await notificationService.createNotification({
-      userId: post.userId,
-      type: 'POST_REJECTED',
-      content: `Bài đăng "${post.title}" của bạn đã bị từ chối${reason ? `: ${reason}` : '.'}`,
-      targetUrl: null,
-    });
-    res.json({ post: formatPost(post) });
+    notificationService.dispatchNotification(notification);
+    res.json({ message: 'Đã từ chối và xóa vĩnh viễn bài đăng' });
   } catch (err) {
     next(err);
   }
@@ -290,7 +287,6 @@ module.exports = {
   createPost,
   updatePost,
   deletePost,
-  resolvePost,
   getPendingPosts,
   getAllPostsAdmin,
   approvePost,

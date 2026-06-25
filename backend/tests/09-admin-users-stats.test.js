@@ -55,9 +55,9 @@ describe('Khóa / mở khóa tài khoản (admin)', () => {
     expect(res.status).toBe(200);
     expect(res.body.user.status).toBe('LOCKED');
 
-    // Bài ACTIVE của user vi phạm bị chuyển DELETED
+    // Bài ACTIVE của user vi phạm bị xóa vĩnh viễn
     const post = await prisma.post.findUnique({ where: { id: activePost.id } });
-    expect(post.status).toBe('DELETED');
+    expect(post).toBeNull();
 
     // Không đăng nhập được nữa
     const login = await request(app)

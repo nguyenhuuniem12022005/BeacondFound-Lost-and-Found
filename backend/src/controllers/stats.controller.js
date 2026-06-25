@@ -15,14 +15,13 @@ async function getStats(req, res, next) {
     const period = req.query.period === 'month' ? 'month' : 'week';
     const now = new Date();
 
-    const [totalUsers, totalPosts, pendingPosts, activePosts, pendingReports, resolvedPosts] =
+    const [totalUsers, totalPosts, pendingPosts, activePosts, pendingReports] =
       await Promise.all([
         prisma.user.count({ where: { role: { not: 'ADMIN' } } }),
-        prisma.post.count({ where: { status: { not: 'DELETED' } } }),
+        prisma.post.count(),
         prisma.post.count({ where: { status: 'PENDING' } }),
         prisma.post.count({ where: { status: 'ACTIVE' } }),
         prisma.report.count({ where: { status: 'PENDING' } }),
-        prisma.post.count({ where: { status: 'RESOLVED' } }),
       ]);
 
     // Chuỗi thời gian: 7 ngày gần nhất (week) hoặc 30 ngày gần nhất (month)
@@ -108,7 +107,6 @@ async function getStats(req, res, next) {
         pendingPosts,
         activePosts,
         pendingReports,
-        resolvedPosts,
         newUsersInPeriod,
         newPostsInPeriod,
       },

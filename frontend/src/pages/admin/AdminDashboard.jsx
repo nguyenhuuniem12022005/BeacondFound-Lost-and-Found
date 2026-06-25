@@ -22,18 +22,33 @@ export default function AdminDashboard() {
   const [period, setPeriod] = useState('week');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     api
       .get('/admin/stats', { params: { period } })
       .then((res) => setData(res.data))
-      .catch(() => {})
+      .catch((err) => {
+        setData(null);
+        setError(err.response?.data?.message || 'Không thể tải dữ liệu thống kê');
+      })
       .finally(() => setLoading(false));
   }, [period]);
 
   if (loading && !data) return <LoadingScreen />;
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="rounded-2xl border border-red-100 bg-white p-8 text-center shadow-card">
+        <p className="font-bold text-red-600">Không thể tải dữ liệu thống kê</p>
+        <p className="mt-2 text-sm text-gray-500">{error}</p>
+        <button onClick={() => window.location.reload()} className="btn-primary mt-4">
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   const { totals, chart, activities } = data;
 

@@ -24,7 +24,7 @@ export function SocketProvider({ children }) {
     // Lấy số thông báo chưa đọc ban đầu
     api.get('/notifications').then((res) => setUnreadNotifications(res.data.unreadCount)).catch(() => {});
 
-    const s = io(API_URL, { auth: { token: localStorage.getItem('token') } });
+    const s = io(API_URL, { auth: { token: sessionStorage.getItem('token') } });
     socketRef.current = s;
     setSocket(s);
 

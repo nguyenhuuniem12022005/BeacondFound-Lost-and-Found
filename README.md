@@ -114,7 +114,7 @@ npm test
 | Member | `member1@beacondfound.com` | `123456` |
 | Member | `member2@beacondfound.com` | `123456` |
 
-Seed bao gồm: 10 danh mục, 10 bài đăng (LOST/FOUND với trạng thái ACTIVE/PENDING/RESOLVED), thông báo, báo cáo vi phạm, cuộc trò chuyện + tin nhắn mẫu.
+Seed bao gồm: 10 danh mục, 10 bài đăng (LOST/FOUND với trạng thái ACTIVE/PENDING), thông báo, báo cáo vi phạm, cuộc trò chuyện + tin nhắn mẫu.
 
 ## Tích hợp API thật (tùy chọn)
 
@@ -140,7 +140,7 @@ POST   /api/auth/register | /api/auth/login        GET /api/auth/me
 GET    /api/users/profile  PUT /api/users/profile  PUT /api/users/:id/lock
 GET|POST /api/categories   PUT|DELETE /api/categories/:id
 GET    /api/posts          GET /api/posts/:id      POST /api/posts
-PUT    /api/posts/:id      DELETE /api/posts/:id   PUT /api/posts/:id/resolve
+PUT    /api/posts/:id      DELETE /api/posts/:id
 GET    /api/admin/posts/pending
 PUT    /api/admin/posts/:id/approve | /reject
 GET    /api/search/posts   GET /api/search/map     (Haversine, bán kính km)
@@ -157,7 +157,8 @@ POST   /api/upload/images  POST /api/ai/suggest-tags
 
 - Bài đăng mới / bài ACTIVE bị sửa → trạng thái `PENDING`, chờ admin duyệt.
 - Chỉ bài `ACTIVE` hiển thị ở trang tìm kiếm công khai.
+- Admin từ chối bài `PENDING` → bài bị xóa vĩnh viễn và thành viên nhận thông báo.
 - Duyệt/từ chối bài, tin nhắn mới, xử lý báo cáo → tạo notification (realtime qua Socket.io).
-- Member chỉ sửa/xóa được bài của mình; Admin quản lý toàn bộ.
-- Tài khoản bị khóa (`LOCKED`) không thể đăng nhập, bài đang hiển thị bị gỡ.
+- Member chỉ sửa/xóa được bài của mình; thao tác xóa sẽ xóa vĩnh viễn bài khỏi cơ sở dữ liệu.
+- Tài khoản bị khóa (`LOCKED`) không thể đăng nhập, các bài đang hiển thị của tài khoản bị xóa vĩnh viễn.
 - Tìm kiếm bản đồ tính khoảng cách bằng công thức **Haversine** ở backend.

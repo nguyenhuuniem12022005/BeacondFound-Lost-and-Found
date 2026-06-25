@@ -26,9 +26,6 @@ enum PostType {
 enum PostStatus {
   PENDING
   ACTIVE
-  REJECTED
-  RESOLVED
-  DELETED
 }
 
 enum ReportStatus {

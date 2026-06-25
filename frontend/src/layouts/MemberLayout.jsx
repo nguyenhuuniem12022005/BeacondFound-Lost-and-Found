@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import Icon from '../components/Icons';
@@ -17,6 +17,7 @@ export default function MemberLayout() {
   const { user, logout } = useAuth();
   const { unreadNotifications } = useSocket();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -144,12 +145,14 @@ export default function MemberLayout() {
         <main className="relative flex-1 overflow-y-auto">
           <Outlet />
           {/* Nút đăng bài nổi */}
-          <Link
-            to="/create-post"
-            className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary-700 px-5 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-primary-800"
-          >
-            {Icon.plus('h-5 w-5')} Đăng bài
-          </Link>
+          {location.pathname === '/home' && (
+            <Link
+              to="/create-post"
+              className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary-700 px-5 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-primary-800"
+            >
+              {Icon.plus('h-5 w-5')} Đăng bài
+            </Link>
+          )}
         </main>
       </div>
     </div>

@@ -33,7 +33,7 @@ export default function AdminPostDetail() {
         toast('Đã duyệt bài đăng và gửi thông báo cho người đăng');
       } else if (confirm === 'reject') {
         await api.put(`/admin/posts/${id}/reject`);
-        toast('Đã từ chối bài đăng và gửi thông báo cho người đăng');
+        toast('Đã từ chối, xóa vĩnh viễn bài đăng và gửi thông báo cho người đăng');
       } else if (confirm === 'delete') {
         await api.delete(`/posts/${id}`);
         toast('Đã xóa bài đăng vi phạm');
@@ -67,11 +67,9 @@ export default function AdminPostDetail() {
               </button>
             </>
           )}
-          {post.status !== 'DELETED' && (
-            <button onClick={() => setConfirm('delete')} className="btn-secondary text-red-600">
-              {Icon.trash('h-4 w-4')} Xóa bài
-            </button>
-          )}
+          <button onClick={() => setConfirm('delete')} className="btn-secondary text-red-600">
+            {Icon.trash('h-4 w-4')} Xóa bài
+          </button>
         </div>
       </div>
 
@@ -160,7 +158,7 @@ export default function AdminPostDetail() {
           confirm === 'approve'
             ? 'Bài đăng sẽ chuyển sang trạng thái Hoạt động, hiển thị công khai và người đăng sẽ nhận được thông báo.'
             : confirm === 'reject'
-            ? 'Bài đăng sẽ bị từ chối và người đăng sẽ nhận được thông báo.'
+            ? 'Bài đăng sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu và người đăng sẽ nhận được thông báo từ chối.'
             : 'Bài đăng sẽ bị xóa khỏi hệ thống và người đăng sẽ nhận được thông báo.'
         }
         confirmText={confirm === 'approve' ? 'Duyệt' : confirm === 'reject' ? 'Từ chối' : 'Xóa'}

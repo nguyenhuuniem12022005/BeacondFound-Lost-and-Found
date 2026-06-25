@@ -172,12 +172,6 @@ export default function PostDetailPage() {
                 >
                   {Icon.flag('h-3.5 w-3.5')} Báo cáo bài viết
                 </button>
-                <button
-                  onClick={() => setReportOpen('user')}
-                  className="mt-1 flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-red-600"
-                >
-                  {Icon.flag('h-3.5 w-3.5')} Báo cáo người dùng
-                </button>
               </>
             ) : (
               <Link to={`/posts/${post.id}/edit`} className="btn-secondary mt-4 w-full">
@@ -191,9 +185,8 @@ export default function PostDetailPage() {
       <ReportModal
         open={!!reportOpen}
         onClose={() => setReportOpen(false)}
-        postId={reportOpen === 'user' ? undefined : post.id}
-        reportedUserId={reportOpen === 'user' ? post.user?.id : undefined}
-        targetName={reportOpen === 'user' ? post.user?.fullName : `bài viết "${post.title}"`}
+        postId={post.id}
+        targetName={`bài viết "${post.title}"`}
       />
     </div>
   );

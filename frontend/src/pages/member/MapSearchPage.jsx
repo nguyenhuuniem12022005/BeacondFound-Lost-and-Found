@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import api from '../../api/axios';
 import Icon from '../../components/Icons';
 import { Spinner, TypeBadge, EmptyState } from '../../components/common';
@@ -17,6 +17,15 @@ function FlyTo({ center }) {
   return null;
 }
 
+function MapClickHandler({ onSelect }) {
+  useMapEvents({
+    click(e) {
+      onSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 export default function MapSearchPage() {
   const [address, setAddress] = useState('');
   const [center, setCenter] = useState(DEFAULT_CENTER);
@@ -25,6 +34,7 @@ export default function MapSearchPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
+  const [selectingLocation, setSelectingLocation] = useState(false);
 
   const search = async (lat = center[0], lng = center[1], r = radius) => {
     setLoading(true);
@@ -69,6 +79,25 @@ export default function MapSearchPage() {
     search(lat, lng, radius);
   };
 
+  const selectCenterOnMap = async (lat, lng) => {
+    setCenter([lat, lng]);
+    setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    search(lat, lng, radius);
+
+    setSelectingLocation(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await res.json();
+      if (data.display_name) setAddress(data.display_name);
+    } catch {
+      // Giữ tọa độ trong ô địa chỉ nếu reverse geocode lỗi.
+    } finally {
+      setSelectingLocation(false);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col md:flex-row">
       {/* Panel trái */}
@@ -87,6 +116,9 @@ export default function MapSearchPage() {
                 className="input pl-9"
               />
             </div>
+            <p className="mt-1.5 text-[11px] text-gray-400">
+              {selectingLocation ? 'Đang lấy địa chỉ...' : 'Hoặc click trực tiếp trên bản đồ để chọn vị trí trung tâm.'}
+            </p>
           </div>
           <div>
             <div className="flex items-center justify-between">
@@ -185,6 +217,7 @@ export default function MapSearchPage() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <MapClickHandler onSelect={selectCenterOnMap} />
           <FlyTo center={center} />
           <Marker position={center} icon={bluePin}>
             <Popup>Vị trí trung tâm</Popup>

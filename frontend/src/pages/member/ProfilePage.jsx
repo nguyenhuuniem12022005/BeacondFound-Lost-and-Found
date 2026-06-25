@@ -11,8 +11,6 @@ const FILTERS = [
   { value: '', label: 'Tất cả' },
   { value: 'ACTIVE', label: 'Đang hoạt động' },
   { value: 'PENDING', label: 'Chờ duyệt' },
-  { value: 'RESOLVED', label: 'Đã tìm thấy' },
-  { value: 'REJECTED', label: 'Bị từ chối' },
 ];
 
 export default function ProfilePage() {
@@ -22,7 +20,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [resolveTarget, setResolveTarget] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const load = () => {
@@ -44,20 +41,6 @@ export default function ProfilePage() {
       load();
     } catch (err) {
       toast(err.response?.data?.message || 'Xóa thất bại', 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const doResolve = async () => {
-    setBusy(true);
-    try {
-      await api.put(`/posts/${resolveTarget.id}/resolve`);
-      toast('Chúc mừng! Bài đăng đã được đánh dấu Đã tìm thấy/Đã trả.');
-      setResolveTarget(null);
-      load();
-    } catch (err) {
-      toast(err.response?.data?.message || 'Cập nhật thất bại', 'error');
     } finally {
       setBusy(false);
     }
@@ -158,14 +141,6 @@ export default function ProfilePage() {
                   <Link to={`/posts/${post.id}/edit`} className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 py-1.5 text-xs font-semibold text-gray-600 hover:border-primary-300 hover:text-primary-700">
                     {Icon.edit('h-3.5 w-3.5')} Sửa
                   </Link>
-                  {(post.status === 'ACTIVE' || post.status === 'PENDING') && (
-                    <button
-                      onClick={() => setResolveTarget(post)}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-emerald-200 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50"
-                    >
-                      {Icon.check('h-3.5 w-3.5')} Đã tìm thấy
-                    </button>
-                  )}
                   <button
                     onClick={() => setDeleteTarget(post)}
                     className="flex items-center justify-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50"
@@ -187,16 +162,6 @@ export default function ProfilePage() {
         title="Xóa bài đăng"
         message={`Bạn có chắc muốn xóa bài "${deleteTarget?.title}"? Hành động này không thể hoàn tác.`}
         confirmText="Xóa bài"
-      />
-      <ConfirmModal
-        open={!!resolveTarget}
-        onClose={() => setResolveTarget(null)}
-        onConfirm={doResolve}
-        loading={busy}
-        danger={false}
-        title="Đánh dấu đã tìm thấy"
-        message={`Xác nhận đồ vật trong bài "${resolveTarget?.title}" đã được tìm thấy/đã trả lại chủ?`}
-        confirmText="Xác nhận"
       />
     </div>
   );

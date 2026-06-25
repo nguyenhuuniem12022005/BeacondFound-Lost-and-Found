@@ -1,4 +1,4 @@
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Icon from '../components/Icons';
 import { avatarOf } from '../utils/format';
@@ -46,9 +46,6 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="border-t border-neutral-800 p-3">
-          <Link to="/home" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-neutral-800 hover:text-white">
-            {Icon.home('h-4 w-4')} Về trang thành viên
-          </Link>
           <button
             onClick={() => {
               logout();

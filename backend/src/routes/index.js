@@ -60,7 +60,6 @@ router.get('/posts/:id', optionalAuth, postController.getPostById);
 router.post('/posts', authenticate, postController.createPost);
 router.put('/posts/:id', authenticate, postController.updatePost);
 router.delete('/posts/:id', authenticate, postController.deletePost);
-router.put('/posts/:id/resolve', authenticate, postController.resolvePost);
 
 // ===== Admin posts =====
 router.get('/admin/posts/pending', authenticate, requireAdmin, postController.getPendingPosts);

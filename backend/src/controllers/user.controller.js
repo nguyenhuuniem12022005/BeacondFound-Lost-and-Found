@@ -1,5 +1,4 @@
 const prisma = require('../config/prisma');
-const notificationService = require('../services/notification.service');
 
 function publicUser(user) {
   const { passwordHash, ...rest } = user;
@@ -13,7 +12,6 @@ async function getProfile(req, res, next) {
       where: { id: req.user.id },
       include: {
         posts: {
-          where: { status: { not: 'DELETED' } },
           include: { images: true, category: true, postTags: { include: { tag: true } } },
           orderBy: { createdAt: 'desc' },
         },
@@ -56,10 +54,9 @@ async function lockUser(req, res, next) {
     const user = await prisma.user.update({ where: { id }, data: { status: newStatus } });
 
     if (newStatus === 'LOCKED') {
-      // Gỡ các bài đang hoạt động của user vi phạm
-      await prisma.post.updateMany({
+      // Xóa vĩnh viễn các bài đang hoạt động của user vi phạm
+      await prisma.post.deleteMany({
         where: { userId: id, status: 'ACTIVE' },
-        data: { status: 'DELETED' },
       });
     }
     res.json({ user: publicUser(user) });
