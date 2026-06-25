@@ -59,7 +59,6 @@ export default function AdminCategories() {
   const { toast } = useToast();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // {mode:'add'} | {mode:'edit', category}
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [name, setName] = useState('');
@@ -125,8 +124,6 @@ export default function AdminCategories() {
     }
   };
 
-  const filtered = categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -136,18 +133,11 @@ export default function AdminCategories() {
         </button>
       </div>
 
-      <div className="relative w-72">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-          {Icon.search('h-4 w-4')}
-        </span>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm danh mục..." className="input pl-9" />
-      </div>
-
       {loading ? (
         <LoadingScreen />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {filtered.map((c) => (
+          {categories.map((c) => (
             <div key={c.id} className="group relative rounded-2xl border border-gray-100 bg-white p-5 shadow-card transition hover:shadow-lg">
               <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition group-hover:opacity-100">
                 <button onClick={() => openEdit(c)} className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:text-primary-700">

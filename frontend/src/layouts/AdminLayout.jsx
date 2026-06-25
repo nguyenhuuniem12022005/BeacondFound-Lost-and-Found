@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { to: '/admin/posts', label: 'Bài đăng', icon: 'document' },
   { to: '/admin/categories', label: 'Danh mục', icon: 'folder' },
   { to: '/admin/reports', label: 'Báo cáo', icon: 'shield' },
-  { to: '/admin/users', label: 'Người dùng', icon: 'users' },
 ];
 
 export default function AdminLayout() {

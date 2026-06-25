@@ -137,7 +137,7 @@ FCM_SERVER_KEY=...
 
 ```
 POST   /api/auth/register | /api/auth/login        GET /api/auth/me
-GET    /api/users/profile  PUT /api/users/profile  PUT /api/users/:id/lock
+GET    /api/users/profile  PUT /api/users/profile
 GET|POST /api/categories   PUT|DELETE /api/categories/:id
 GET    /api/posts          GET /api/posts/:id      POST /api/posts
 PUT    /api/posts/:id      DELETE /api/posts/:id
@@ -149,6 +149,7 @@ GET|POST /api/conversations/:id/messages
 GET    /api/notifications  PUT /api/notifications/:id/read | /read-all
 POST   /api/reports        GET /api/admin/reports  GET /api/admin/reports/:id
 PUT    /api/admin/reports/:id/resolve | /reject
+PUT    /api/admin/reports/:id/lock-user
 GET    /api/admin/stats?period=week|month
 POST   /api/upload/images  POST /api/ai/suggest-tags
 ```
@@ -160,5 +161,5 @@ POST   /api/upload/images  POST /api/ai/suggest-tags
 - Admin từ chối bài `PENDING` → bài bị xóa vĩnh viễn và thành viên nhận thông báo.
 - Duyệt/từ chối bài, tin nhắn mới, xử lý báo cáo → tạo notification (realtime qua Socket.io).
 - Member chỉ sửa/xóa được bài của mình; thao tác xóa sẽ xóa vĩnh viễn bài khỏi cơ sở dữ liệu.
-- Tài khoản bị khóa (`LOCKED`) không thể đăng nhập, các bài đang hiển thị của tài khoản bị xóa vĩnh viễn.
+- Admin chỉ khóa tài khoản thông qua xử lý báo cáo; tài khoản `LOCKED` không thể mở khóa và các bài đang hiển thị bị xóa vĩnh viễn.
 - Tìm kiếm bản đồ tính khoảng cách bằng công thức **Haversine** ở backend.

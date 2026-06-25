@@ -16,10 +16,10 @@ const STEPS = [
 
 const DEFAULT_CENTER = [10.7769, 106.7009];
 
-function LocationPicker({ position, setPosition }) {
+function LocationPicker({ position, onSelect }) {
   useMapEvents({
     click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
+      onSelect(e.latlng.lat, e.latlng.lng);
     },
   });
   return position ? <Marker position={position} icon={redPin} /> : null;
@@ -105,6 +105,23 @@ export default function CreatePostPage() {
       else toast('Không tìm thấy địa chỉ, hãy ghim trực tiếp trên bản đồ', 'info');
     } catch {
       toast('Không thể định vị địa chỉ, hãy ghim trực tiếp trên bản đồ', 'info');
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  const selectPositionOnMap = async (lat, lng) => {
+    setPosition([lat, lng]);
+    setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    setGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await res.json();
+      if (data.display_name) setAddress(data.display_name);
+    } catch {
+      // Giữ tọa độ trong ô địa chỉ nếu không lấy được tên địa điểm.
     } finally {
       setGeocoding(false);
     }
@@ -348,14 +365,14 @@ export default function CreatePostPage() {
                   <MapContainer center={position} zoom={13} className="h-full w-full">
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <FlyTo center={position} />
-                    <LocationPicker position={position} setPosition={setPosition} />
+                    <LocationPicker position={position} onSelect={selectPositionOnMap} />
                   </MapContainer>
                 </div>
                 <div className="flex items-center justify-between bg-primary-50 px-3 py-2 text-xs text-gray-600">
                   <span className="flex items-center gap-1 font-semibold text-primary-700">
                     {Icon.pin('h-3.5 w-3.5')} {position[0].toFixed(6)}, {position[1].toFixed(6)}
                   </span>
-                  <span>Click lên bản đồ để ghim chính xác vị trí</span>
+                  <span>{geocoding ? 'Đang lấy địa chỉ...' : 'Click lên bản đồ để ghim chính xác vị trí'}</span>
                 </div>
               </div>
             </div>

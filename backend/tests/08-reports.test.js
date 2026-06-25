@@ -130,6 +130,31 @@ describe('Admin xử lý báo cáo', () => {
     expect(notif).not.toBeNull();
   });
 
+  test('admin khóa tài khoản từ báo cáo -> LOCKED, xóa bài ACTIVE và resolve báo cáo', async () => {
+    const violator = await registerMember();
+    const activePost = await createActivePost(violator.token, admin.token, {
+      title: 'Bài vi phạm dẫn đến khóa tài khoản',
+    });
+    const created = await request(app)
+      .post('/api/reports')
+      .set(auth(reporter.token))
+      .send({ postId: activePost.id, reason: 'Tài khoản có hành vi vi phạm nghiêm trọng' });
+
+    const res = await request(app)
+      .put(`/api/admin/reports/${created.body.report.id}/lock-user`)
+      .set(auth(admin.token));
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.status).toBe('LOCKED');
+    expect(res.body.report.status).toBe('RESOLVED');
+    expect(await prisma.post.findUnique({ where: { id: activePost.id } })).toBeNull();
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: violator.email, password: violator.password });
+    expect(login.status).toBe(403);
+  });
+
   test('lọc theo trạng thái PENDING -> không chứa báo cáo đã xử lý', async () => {
     const res = await request(app)
       .get('/api/admin/reports')

@@ -42,19 +42,10 @@ export default function AdminReportDetail() {
         return;
       }
       if (confirm === 'lockUser') {
-        const targetUserId = report.reportedUser?.id || report.post?.user?.id;
-        if (targetUserId) {
-          await api.put(`/users/${targetUserId}/lock`);
-        }
-        await api.put(`/admin/reports/${id}/resolve`);
+        await api.put(`/admin/reports/${id}/lock-user`);
         toast('Đã khóa tài khoản vi phạm và đánh dấu báo cáo đã giải quyết');
         navigate('/admin/reports');
         return;
-      }
-      if (confirm === 'resolve') {
-        await api.put(`/admin/reports/${id}/resolve`);
-        toast('Đã đánh dấu báo cáo là đã giải quyết');
-        navigate('/admin/reports');
       }
     } catch (err) {
       toast(err.response?.data?.message || 'Thao tác thất bại', 'error');
@@ -177,19 +168,13 @@ export default function AdminReportDetail() {
               {targetUser && (
                 <button
                   onClick={() => setConfirm('lockUser')}
-                  disabled={busy || report.status !== 'PENDING'}
+                  disabled={busy || report.status !== 'PENDING' || targetUser.status === 'LOCKED'}
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-900 disabled:opacity-40"
                 >
-                  {Icon.lock('h-4 w-4')} Khóa tài khoản người dùng
+                  {Icon.lock('h-4 w-4')}{' '}
+                  {targetUser.status === 'LOCKED' ? 'Tài khoản đã bị khóa' : 'Khóa tài khoản người dùng'}
                 </button>
               )}
-              <button
-                onClick={() => setConfirm('resolve')}
-                disabled={busy || report.status !== 'PENDING'}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-40"
-              >
-                {Icon.check('h-4 w-4')} Đánh dấu đã giải quyết
-              </button>
             </div>
             {report.status !== 'PENDING' && (
               <p className="mt-3 text-center text-xs text-gray-400">Báo cáo này đã được xử lý.</p>
@@ -203,7 +188,7 @@ export default function AdminReportDetail() {
         onClose={() => setConfirm(null)}
         onConfirm={act}
         loading={busy}
-        danger={confirm !== 'resolve' && confirm !== 'ignore'}
+        danger={confirm !== 'ignore'}
         title={
           confirm === 'ignore'
             ? 'Bỏ qua báo cáo'
@@ -211,7 +196,7 @@ export default function AdminReportDetail() {
             ? 'Xóa bài đăng vi phạm'
             : confirm === 'lockUser'
             ? 'Khóa tài khoản'
-            : 'Đánh dấu đã giải quyết'
+            : ''
         }
         message={
           confirm === 'ignore'
@@ -219,8 +204,8 @@ export default function AdminReportDetail() {
             : confirm === 'deletePost'
             ? `Xóa bài đăng "${report.post?.title}" và đánh dấu báo cáo đã giải quyết?`
             : confirm === 'lockUser'
-            ? `Khóa tài khoản "${targetUser?.fullName}"? Người dùng sẽ không thể đăng nhập và các bài đang hoạt động sẽ bị gỡ.`
-            : 'Đánh dấu báo cáo này là đã giải quyết và thông báo cho người báo cáo?'
+            ? `Khóa vĩnh viễn tài khoản "${targetUser?.fullName}"? Người dùng sẽ không thể đăng nhập và các bài đang hoạt động sẽ bị xóa.`
+            : ''
         }
         confirmText={confirm === 'lockUser' ? 'Xác nhận khóa' : 'Đồng ý'}
       />

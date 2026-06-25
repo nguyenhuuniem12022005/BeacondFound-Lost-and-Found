@@ -6,7 +6,7 @@ const REPORT_INCLUDE = {
   reportedUser: { select: { id: true, fullName: true, email: true, avatarUrl: true, status: true } },
   post: {
     include: {
-      user: { select: { id: true, fullName: true, avatarUrl: true } },
+      user: { select: { id: true, fullName: true, avatarUrl: true, status: true } },
       images: true,
     },
   },
@@ -107,4 +107,70 @@ async function rejectReport(req, res, next) {
   }
 }
 
-module.exports = { createReport, getReports, getReportById, resolveReport, rejectReport };
+// PUT /api/admin/reports/:id/lock-user
+async function lockReportedUser(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    const current = await prisma.report.findUnique({
+      where: { id },
+      include: { post: { select: { userId: true } } },
+    });
+    if (!current) return res.status(404).json({ message: 'Không tìm thấy báo cáo' });
+    if (current.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Báo cáo này đã được xử lý' });
+    }
+
+    const targetUserId = current.reportedUserId || current.post?.userId;
+    if (!targetUserId) {
+      return res.status(400).json({ message: 'Không tìm thấy tài khoản vi phạm' });
+    }
+    const target = await prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!target) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    if (target.role === 'ADMIN') {
+      return res.status(400).json({ message: 'Không thể khóa tài khoản admin' });
+    }
+
+    const content =
+      'Báo cáo vi phạm của bạn đã được xử lý và tài khoản vi phạm đã bị khóa. Cảm ơn bạn đã góp phần xây dựng cộng đồng an toàn.';
+    const result = await prisma.$transaction(async (tx) => {
+      const user =
+        target.status === 'LOCKED'
+          ? target
+          : await tx.user.update({
+              where: { id: targetUserId },
+              data: { status: 'LOCKED' },
+            });
+      await tx.post.deleteMany({
+        where: { userId: targetUserId, status: 'ACTIVE' },
+      });
+      const report = await tx.report.update({
+        where: { id },
+        data: { status: 'RESOLVED' },
+        include: REPORT_INCLUDE,
+      });
+      const notification = await tx.notification.create({
+        data: {
+          userId: current.reporterId,
+          type: 'REPORT_RESOLVED',
+          content,
+          targetUrl: null,
+        },
+      });
+      return { user, report, notification };
+    });
+
+    notificationService.dispatchNotification(result.notification);
+    res.json({ user: result.user, report: result.report });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  createReport,
+  getReports,
+  getReportById,
+  resolveReport,
+  rejectReport,
+  lockReportedUser,
+};

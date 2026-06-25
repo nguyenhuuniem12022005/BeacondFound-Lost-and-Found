@@ -25,7 +25,6 @@ import AdminPostDetail from './pages/admin/AdminPostDetail';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminReports from './pages/admin/AdminReports';
 import AdminReportDetail from './pages/admin/AdminReportDetail';
-import AdminUsers from './pages/admin/AdminUsers';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -99,7 +98,6 @@ export default function App() {
         <Route path="categories" element={<AdminCategories />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="reports/:id" element={<AdminReportDetail />} />
-        <Route path="users" element={<AdminUsers />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,16 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-} from 'recharts';
 import api from '../../api/axios';
 import Icon from '../../components/Icons';
 import { LoadingScreen, StatusBadge } from '../../components/common';
@@ -50,7 +39,7 @@ export default function AdminDashboard() {
     );
   }
 
-  const { totals, chart, activities } = data;
+  const { totals, activities } = data;
 
   const statCards = [
     { label: 'Người dùng mới', value: totals.newUsersInPeriod, sub: `Tổng: ${totals.totalUsers}`, icon: 'users', color: 'text-primary-600 bg-primary-50' },
@@ -102,51 +91,10 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-card">
-          <h2 className="font-bold text-gray-900">Người dùng mới theo {period === 'week' ? 'tuần' : 'tháng'}</h2>
-          <div className="mt-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chart}>
-                <defs>
-                  <linearGradient id="gUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#cd3033" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#cd3033" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => d.slice(5)} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
-                <Tooltip />
-                <Area type="monotone" dataKey="newUsers" name="Người dùng mới" stroke="#cd3033" strokeWidth={2} fill="url(#gUsers)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-card">
-          <h2 className="font-bold text-gray-900">Bài đăng mới theo {period === 'week' ? 'tuần' : 'tháng'}</h2>
-          <div className="mt-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => d.slice(5)} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
-                <Tooltip />
-                <Bar dataKey="newPosts" name="Bài đăng mới" fill="#cd3033" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
       {/* Hoạt động gần đây */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-card">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+        <div className="border-b border-gray-100 px-5 py-4">
           <h2 className="font-bold text-gray-900">Hoạt động gần đây</h2>
-          <Link to="/admin/posts" className="text-xs font-bold text-primary-700 hover:underline">
-            Xem tất cả
-          </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

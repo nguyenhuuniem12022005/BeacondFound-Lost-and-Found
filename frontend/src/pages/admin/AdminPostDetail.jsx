@@ -15,7 +15,7 @@ export default function AdminPostDetail() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [confirm, setConfirm] = useState(null); // 'approve' | 'reject' | 'delete'
+  const [confirm, setConfirm] = useState(null); // 'approve' | 'reject'
 
   useEffect(() => {
     api
@@ -34,9 +34,6 @@ export default function AdminPostDetail() {
       } else if (confirm === 'reject') {
         await api.put(`/admin/posts/${id}/reject`);
         toast('Đã từ chối, xóa vĩnh viễn bài đăng và gửi thông báo cho người đăng');
-      } else if (confirm === 'delete') {
-        await api.delete(`/posts/${id}`);
-        toast('Đã xóa bài đăng vi phạm');
       }
       navigate('/admin/posts');
     } catch (err) {
@@ -67,9 +64,6 @@ export default function AdminPostDetail() {
               </button>
             </>
           )}
-          <button onClick={() => setConfirm('delete')} className="btn-secondary text-red-600">
-            {Icon.trash('h-4 w-4')} Xóa bài
-          </button>
         </div>
       </div>
 
@@ -153,15 +147,13 @@ export default function AdminPostDetail() {
         onConfirm={act}
         loading={busy}
         danger={confirm !== 'approve'}
-        title={confirm === 'approve' ? 'Duyệt bài đăng' : confirm === 'reject' ? 'Từ chối bài đăng' : 'Xóa bài đăng'}
+        title={confirm === 'approve' ? 'Duyệt bài đăng' : 'Từ chối bài đăng'}
         message={
           confirm === 'approve'
             ? 'Bài đăng sẽ chuyển sang trạng thái Hoạt động, hiển thị công khai và người đăng sẽ nhận được thông báo.'
-            : confirm === 'reject'
-            ? 'Bài đăng sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu và người đăng sẽ nhận được thông báo từ chối.'
-            : 'Bài đăng sẽ bị xóa khỏi hệ thống và người đăng sẽ nhận được thông báo.'
+            : 'Bài đăng sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu và người đăng sẽ nhận được thông báo từ chối.'
         }
-        confirmText={confirm === 'approve' ? 'Duyệt' : confirm === 'reject' ? 'Từ chối' : 'Xóa'}
+        confirmText={confirm === 'approve' ? 'Duyệt' : 'Từ chối'}
       />
     </div>
   );

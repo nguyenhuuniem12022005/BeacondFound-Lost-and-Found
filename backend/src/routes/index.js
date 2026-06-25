@@ -44,8 +44,6 @@ router.get('/auth/me', authenticate, authController.me);
 // ===== Users =====
 router.get('/users/profile', authenticate, userController.getProfile);
 router.put('/users/profile', authenticate, userController.updateProfile);
-router.put('/users/:id/lock', authenticate, requireAdmin, userController.lockUser);
-router.get('/admin/users', authenticate, requireAdmin, userController.listUsers);
 
 // ===== Categories =====
 router.get('/categories', categoryController.getCategories);
@@ -89,6 +87,7 @@ router.get('/admin/reports', authenticate, requireAdmin, reportController.getRep
 router.get('/admin/reports/:id', authenticate, requireAdmin, reportController.getReportById);
 router.put('/admin/reports/:id/resolve', authenticate, requireAdmin, reportController.resolveReport);
 router.put('/admin/reports/:id/reject', authenticate, requireAdmin, reportController.rejectReport);
+router.put('/admin/reports/:id/lock-user', authenticate, requireAdmin, reportController.lockReportedUser);
 
 // ===== Stats =====
 router.get('/admin/stats', authenticate, requireAdmin, statsController.getStats);
